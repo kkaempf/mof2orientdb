@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+#
+# mof2orientdb
+#
+#  Import MOF information into OrientDB
+#
+# Copyright (c) 2013 Klaus Kämpf <kkaempf@suse.de>
+#
+# Licensed under the Ruby license
+#
+
+require 'rubygems'
+
+$:.push(File.join(File.dirname(__FILE__), '..', 'lib'))
+
+puts $:.inspect
+
+require 'mof2orientdb'
+
+options = Mof2OrientDB::Options.new
+
+begin
+  client = Mof2OrientDB::Client.new options
+  client.connect
+ensure
+  client.disconnect
+end
