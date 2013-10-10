@@ -11,13 +11,12 @@ module Mof2OrientDB
 
     def initialize options = nil
       @options = options
-      host = options.uri.host
-      port = options.uri.port.to_i
-      ssl = options.uri.scheme == "https"
       parms = Hash.new
-      parms[:host] = host if host
-      parms[:port] = port if port
-      parms[:ssl] = ssl if ssl
+      if @options.target
+        parms[:host] = @options.target.host
+        parms[:port] = @options.target.port.to_i
+        parms[:ssl] = @options.target.scheme == "https"
+      end
       @client = Orientdb4r.client parms
     end
     
@@ -26,7 +25,7 @@ module Mof2OrientDB
     end
     
     def disconnect
-      @client.disconnect
+      @client.disconnect if @client
     end
   end
 end
