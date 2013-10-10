@@ -9,10 +9,10 @@ require 'uri'
 
 module Mof2OrientDB
   class Options
-    attr_reader :target, :user, :password, :database
+    attr_reader :target, :user, :password, :database, :includes
 
     def initialize
-
+      @includes = Array.new
       # Parse command line options
       GetoptLong.new(
         [ '-h', '--help', GetoptLong::NO_ARGUMENT ],
@@ -20,30 +20,29 @@ module Mof2OrientDB
         [ '-t', '--target', GetoptLong::REQUIRED_ARGUMENT ],
         [ '-u', '--user', GetoptLong::REQUIRED_ARGUMENT ],
         [ '-p', '--pass', '--password', GetoptLong::REQUIRED_ARGUMENT ],
-        [ '-d', '--db', '--database', GetoptLong::REQUIRED_ARGUMENT ]
+        [ '-d', '--db', '--database', GetoptLong::REQUIRED_ARGUMENT ],
+        [ '-I', '--include', GetoptLong::REQUIRED_ARGUMENT ]
       ).each do |opt, arg|
         puts "#{opt.inspect}: #{arg.inspect}"
         case opt
-        when '--target'
+        when '-t'
           @target = URI.new(arg)
-        when '--user'
+        when '-u'
           @user = arg
-        when '-password'
+        when '-p'
           @password = arg
-        when '--database'
+        when '-d'
           @database = arg
-        when '--package'
-          self.package = arg
+        when '-I'
+          @includes << arg
         else
           "Run $0 -h or $0 -H for details on usage";
         end
       end
-      unless ARGV.empty?
-        abort "Extra arguments: #{ARGV}"
-      end
       
-      raise "Username missing: --user <name>" unless @user
-      raise "Password missing: --pass <name>" unless @user
+      abort "Database missing: --db <name>" unless @database
+      abort "Username missing: --user <name>" unless @user
+      abort "Password missing: --pass <name>" unless @password
     end
   
   end
