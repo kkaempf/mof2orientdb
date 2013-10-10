@@ -13,15 +13,21 @@ require 'rubygems'
 
 $:.push(File.join(File.dirname(__FILE__), '..', 'lib'))
 
-puts $:.inspect
-
 require 'mof2orientdb'
 
 options = Mof2OrientDB::Options.new
 
+client = Mof2OrientDB::Client.new options
+client.connect
 begin
-  client = Mof2OrientDB::Client.new options
-  client.connect
+  ARGV.each do |p|
+    puts "Importing #{p}"
+    Mof2OrientDB::Importer.new p, options.includes
+  end
+rescue Exception => e
+  STDERR.puts "Import failed: #{e}"
+  trace = $@.join("\n\t")
+  STDERR.puts "At #{trace}"
 ensure
   client.disconnect
 end
