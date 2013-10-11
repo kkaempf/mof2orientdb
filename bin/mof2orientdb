@@ -12,17 +12,35 @@
 require 'rubygems'
 
 $:.push(File.join(File.dirname(__FILE__), '..', 'lib'))
-
+$:.push "/abuild/projects/cmdb/orientdb4r/lib"
 require 'mof2orientdb'
+
+INCLUDE="/usr/share/mof/cim-current"
 
 options = Mof2OrientDB::Options.new
 
 client = Mof2OrientDB::Client.new options
+
+if options.clean
+  begin
+    if client.dbclient.get_database :database => options.database, :user => options.user, :password => options.password
+      resp = client.dbclient.delete_database :database => options.database, :user => options.user, :password => options.password
+    end
+  rescue Orientdb4r::ServerError => e
+    puts "Database does not exist?: #{e}"
+  rescue Orientdb4r::UnauthorizedError => e
+    puts "Wrong credentials or database does not exist: #{e}"
+  end
+  puts
+  puts "Creating #{options.database} now"
+  resp = client.dbclient.create_database :database => options.database, :user => options.user, :password => options.password, :storage => :local, :type => :graph
+end
+
 client.connect
+
 begin
-  ARGV.each do |p|
-    puts "Importing #{p}"
-    Mof2OrientDB::Importer.new p, options.includes
+  ARGV.each do |path|
+    Mof2OrientDB::Importer.new client.dbclient, path, options.includes + [ INCLUDE ], options.scheme
   end
 rescue Exception => e
   STDERR.puts "Import failed: #{e}"
