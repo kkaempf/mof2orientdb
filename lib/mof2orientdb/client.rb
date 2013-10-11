@@ -8,7 +8,7 @@ require 'orientdb4r'
 
 module Mof2OrientDB
   class Client
-
+    attr_reader :dbclient
     def initialize options = nil
       @options = options
       parms = Hash.new
@@ -17,15 +17,15 @@ module Mof2OrientDB
         parms[:port] = @options.target.port.to_i
         parms[:ssl] = @options.target.scheme == "https"
       end
-      @client = Orientdb4r.client parms
+      @dbclient = Orientdb4r.client parms
     end
     
     def connect
-      @client.connect :database => @options.database, :user => @options.user, :password => @options.password
+      @dbclient.connect :database => @options.database, :user => @options.user, :password => @options.password
     end
     
     def disconnect
-      @client.disconnect if @client
+      @dbclient.disconnect if @dbclient
     end
   end
 end
