@@ -9,7 +9,7 @@ require 'uri'
 
 module Mof2OrientDB
   class Options
-    attr_reader :target, :user, :password, :database, :includes
+    attr_reader :target, :user, :password, :database, :includes, :scheme, :clean
 
     def initialize
       @includes = Array.new
@@ -21,9 +21,10 @@ module Mof2OrientDB
         [ '-u', '--user', GetoptLong::REQUIRED_ARGUMENT ],
         [ '-p', '--pass', '--password', GetoptLong::REQUIRED_ARGUMENT ],
         [ '-d', '--db', '--database', GetoptLong::REQUIRED_ARGUMENT ],
-        [ '-I', '--include', GetoptLong::REQUIRED_ARGUMENT ]
+        [ '-I', '--include', GetoptLong::REQUIRED_ARGUMENT ],
+        [ '-s', '--scheme', GetoptLong::REQUIRED_ARGUMENT ],
+        [ '-c', '--clean', GetoptLong::NO_ARGUMENT ]
       ).each do |opt, arg|
-        puts "#{opt.inspect}: #{arg.inspect}"
         case opt
         when '-t'
           @target = URI.new(arg)
@@ -35,6 +36,10 @@ module Mof2OrientDB
           @database = arg
         when '-I'
           @includes << arg
+        when '-s'
+          @scheme = arg
+        when '-c'
+          @clean = true
         else
           "Run $0 -h or $0 -H for details on usage";
         end
