@@ -43,6 +43,11 @@ rescue Orientdb4r::ConnectionError
   exit 1
 end
 
+if ARGV.empty?
+  STDERR.puts "No MOF file or path given"
+  exit 0
+end
+
 begin
   ARGV.each do |path|
     Mof2OrientDB::Importer.new client.dbclient, path, options.includes + [ INCLUDE ], options.scheme
