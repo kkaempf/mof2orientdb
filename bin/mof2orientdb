@@ -36,7 +36,12 @@ if options.clean
   resp = client.dbclient.create_database :database => options.database, :user => options.user, :password => options.password, :storage => :local, :type => :graph
 end
 
-client.connect
+begin
+  client.connect
+rescue Orientdb4r::ConnectionError
+  STDERR.puts "Can't connect to database, is orientdb running ?!"
+  exit 1
+end
 
 begin
   ARGV.each do |path|
