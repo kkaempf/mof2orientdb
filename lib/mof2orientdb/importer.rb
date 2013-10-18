@@ -13,13 +13,17 @@ module Mof2OrientDB
     BASECLASS = "CIMClass"
     @@classes = {}
   private
-    # try to access inc/name
-    # return triple of [ path, directory?, readable? ]
-    def try_path inc, name
-      path = File.join(inc, name)
-      res = [ path, File.directory?(path), File.readable?(path) ]
-#      puts "Try #{res}"
-      res
+    def try inc, name
+      @result = nil
+      @path = File.join(inc, name)
+      puts "try (#{inc.inspect},#{name.inspect}): #{@path}"
+      @result = if File.directory?(@path)
+                  :dir 
+                elsif File.readable?(@path)
+                  :file
+                else
+                  nil
+                end
     end
     #
     # expand name by
@@ -28,50 +32,42 @@ module Mof2OrientDB
     # - prepend CIM_
     #
     def expand name, scheme = nil
-      path, is_dir, is_readable = try_path "", name
-      unless is_dir || is_readable
+      @path = nil
+      @result = nil
+      unless try "", name # name is not a reachable path
         # loop through include dirs, including current dir
         @includes.unshift(".").each do |inc|
           # test <name>, <name>.mof, CIM_<name>.mof
           # if <name> is a directory, recursively import it
           incdir = File.expand_path(inc)
-          path, is_dir, is_readable = try_path inc, name
-          break if is_dir || is_readable
-          if scheme
-            path, is_dir, is_readable = try_path inc, File.join(scheme,name)
-            break if is_dir || is_readable
-          end
+          break if try inc, name
+          break if scheme && try(inc, File.join(scheme,name))
           unless name =~ /^.*\.mof$/
-            path, is_dir, is_readable = try_path inc, "#{name}.mof"
-            break if is_readable
-            if scheme
-              path, is_dir, is_readable = try_path inc, File.join(scheme,"#{name}.mof")
-              break if is_readable
-            end
+            break if try inc, "#{name}.mof"
+            break if scheme && try(inc, File.join(scheme,"#{name}.mof"))
           end
           unless name =~ /^(CIM_.*|.*\/.*)$/
-            path, is_dir, is_readable = try_path inc, "CIM_#{name}.mof"
-            break if is_readable
-            if scheme
-              path, is_dir, is_readable = try_path inc, File.join(scheme,"CIM_#{name}.mof")
-              break if is_readable
-            end
+            break if try inc, "CIM_#{name}.mof"
+            break if scheme && try(inc, File.join(scheme,"CIM_#{name}.mof"))
           end
         end
       end
-#      puts "dir? #{is_dir}, readable? #{is_readable} : #{path}"
-      if is_dir
-        puts "Importing directory #{path}"
-        Dir.foreach(path) do |filename|
+      puts "#{@path.inspect} -> #{@result.inspect}"
+      case @result
+      when :dir
+        puts "Importing directory #{@path}"
+        Dir.foreach(@path) do |filename|
           next if filename[0,1] == "."
-          yield File.join(path, filename)
+          yield File.join(@path, filename)
         end
-      elsif is_readable
-        yield path
+      when :file
+        yield @path
       else
+        STDERR.puts "Can't find MOF at #{name}"
         raise Errno::ENOENT
       end
     end
+
   public
     def initialize client, name, includes = [], scheme = nil
       @client = client
