@@ -85,10 +85,10 @@ module Mof2OrientDB
       end
       @edges = []
       @vertexes.each do |name,vertex|        
-        puts "Vertex #{name} : #{vertex.inspect}"
-        sc = vertex['superclass']
-        unless sc.empty?
-          sql = "CREATE EDGE Superclass FROM (SELECT FROM #{BASECLASS} WHERE name = '#{vertex['name']}') TO (SELECT FROM #{BASECLASS} WHERE name = '#{sc}')"
+        puts "Vertex #{name} : #{vertex}"
+        sc = vertex.superclass
+        if sc
+          sql = "CREATE EDGE Superclass FROM (SELECT FROM #{BASECLASS} WHERE name = '#{vertex.name}') TO (SELECT FROM #{BASECLASS} WHERE name = '#{sc}')"
           begin
             entries = @client.command sql
             puts "Edge: #{entries['result']}"
@@ -141,11 +141,11 @@ module Mof2OrientDB
       unless vertex
         vertex = client.get_vertex BASECLASS, { :name => name } rescue nil
 #        puts "Vertex? #{BASECLASS}: #{vertex.inspect}"
-        if vertex.empty?
+        unless vertex
           vertex = client.create_vertex BASECLASS, { :name => name, :scheme => scheme, :superclass => klass.superclass }
 #          puts "Vertex! #{BASECLASS}:{name}: #{vertex.inspect}"
         end
-        @vertexes[name] = vertex[0]
+        @vertexes[name] = vertex
       end
       vertex
     end
