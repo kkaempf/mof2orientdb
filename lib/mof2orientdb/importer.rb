@@ -25,13 +25,26 @@ module Mof2OrientDB
                   nil
                 end
     end
+              
+    def dir_recursive dir, &block
+      puts "Importing directory #{dir}"
+      Dir.foreach(dir) do |filename|
+        next if filename[0,1] == "."
+        p = File.join(dir, filename)
+        if File.directory? p
+          dir_recursive p, &block
+        else
+          yield p
+        end
+      end
+    end
     #
     # expand name by
     # - cycling through includes
     # - append .mof
     # - prepend CIM_
     #
-    def expand name, scheme = nil
+    def expand name, scheme, &block
       @path = nil
       @result = nil
       unless try "", name # name is not a reachable path
@@ -55,11 +68,7 @@ module Mof2OrientDB
       puts "#{@path.inspect} -> #{@result.inspect}"
       case @result
       when :dir
-        puts "Importing directory #{@path}"
-        Dir.foreach(@path) do |filename|
-          next if filename[0,1] == "."
-          yield File.join(@path, filename)
-        end
+        dir_recursive @path, &block
       when :file
         yield @path
       else
